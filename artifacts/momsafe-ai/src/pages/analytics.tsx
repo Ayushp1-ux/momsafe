@@ -1,7 +1,7 @@
 import { PageTransition } from "@/components/ui/page-transition";
 import { generateTrendData } from "@/lib/mock-data";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
-import { BrainCircuit, TrendingUp, Filter } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from "recharts";
+import { Filter } from "lucide-react";
 
 export default function Analytics() {
   const compositeData = generateTrendData(30, 100, 20).map(d => ({
@@ -12,68 +12,53 @@ export default function Analytics() {
 
   return (
     <PageTransition>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Analytics & Intelligence</h1>
-          <p className="text-muted-foreground mt-1">Correlations and deep insights across all health data.</p>
+          <h1 className="text-2xl font-bold text-foreground">Analytics & Trends</h1>
+          <p className="text-sm text-muted-foreground">Longitudinal correlation of physiological parameters.</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-border rounded-xl text-sm font-semibold text-foreground hover:bg-gray-50 transition-colors shadow-sm">
-          <Filter className="w-4 h-4" /> Filter Metrics
+        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-border rounded text-xs font-medium hover:bg-gray-50 transition-colors shadow-sm">
+          <Filter className="w-3.5 h-3.5" /> Filter Parameters
         </button>
       </div>
 
-      {/* Main Correlation Chart */}
-      <div className="bg-white rounded-3xl p-8 premium-shadow border border-border/50 mb-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-xl font-display font-bold">Vitals Correlation Engine</h2>
-            <p className="text-sm text-muted-foreground mt-1">Overlapping Sleep Quality vs Stress Levels over 30 days</p>
-          </div>
-          <div className="p-2 bg-primary/10 rounded-xl">
-            <BrainCircuit className="w-6 h-6 text-primary" />
+      <div className="card-clinical p-0 mb-6 overflow-hidden">
+        <div className="p-4 border-b border-border flex justify-between items-center bg-gray-50">
+          <h2 className="clinical-label text-sm">Multivariate Analysis: Sleep vs. Stress (30D)</h2>
+          <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+            Dataset: 1.2M Points
           </div>
         </div>
         
-        <div className="h-[400px] w-full">
+        <div className="p-5 h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={compositeData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorStress" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorSleep" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid vertical={false} opacity={0.3} />
-              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} dy={10} minTickGap={30} />
-              <YAxis axisLine={false} tickLine={false} tick={{fill: '#9CA3AF', fontSize: 12}} />
+            <LineChart data={compositeData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+              <CartesianGrid vertical={false} />
+              <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 10}} dy={10} minTickGap={30} />
+              <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 10}} />
               <Tooltip 
-                contentStyle={{ borderRadius: '12px', border: '1px solid #E5E7EB', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
+                contentStyle={{ borderRadius: '4px', border: '1px solid #E2E6EA', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontSize: '12px', padding: '8px' }}
               />
-              <Legend verticalAlign="top" height={36} iconType="circle" />
-              <Area type="monotone" name="Stress Level" dataKey="stressLevel" stroke="hsl(var(--accent))" strokeWidth={3} fillOpacity={1} fill="url(#colorStress)" />
-              <Area type="monotone" name="Sleep Quality" dataKey="sleepQuality" stroke="hsl(var(--primary))" strokeWidth={3} fillOpacity={1} fill="url(#colorSleep)" />
-            </AreaChart>
+              <Legend verticalAlign="top" height={36} iconType="plainline" wrapperStyle={{ fontSize: '12px' }} />
+              <Line type="monotone" name="Stress Index" dataKey="stressLevel" stroke="#D97706" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+              <Line type="monotone" name="Sleep Score" dataKey="sleepQuality" stroke="#2563EB" strokeWidth={1.5} dot={false} isAnimationActive={false} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { title: "Weekly Trend", text: "Resting HR reduced by 4% on average when >7h sleep is achieved.", stat: "-4%", trend: "positive" },
-          { title: "AI Discovery", text: "Blood pressure peaks correlate strongly with late afternoon activities.", stat: "High Correlation", trend: "neutral" },
-          { title: "Health Trajectory", text: "Overall risk trajectory is stable. Continue current nutrition plan.", stat: "Stable", trend: "positive" }
+          { title: "RHR & Sleep Correlation", text: "Resting HR reduced by 4% on average when >7h sleep is achieved.", stat: "-4.2%", trend: "positive" },
+          { title: "BP Diurnal Variation", text: "Blood pressure peaks correlate with late afternoon activity.", stat: "r = 0.82", trend: "neutral" },
+          { title: "Risk Trajectory", text: "Overall risk trajectory is flat. No significant deviation from baseline.", stat: "Stable", trend: "positive" }
         ].map((card, i) => (
-          <div key={i} className="bg-white p-6 rounded-2xl border border-border/50 premium-shadow">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-semibold text-foreground">{card.title}</h3>
-              <TrendingUp className={`w-5 h-5 ${card.trend === 'positive' ? 'text-green-500' : 'text-amber-500'}`} />
+          <div key={i} className="card-clinical p-4">
+            <h3 className="clinical-label mb-2">{card.title}</h3>
+            <div className={`data-value mb-2 ${card.trend === 'positive' ? 'text-green-600' : 'text-foreground'}`}>
+              {card.stat}
             </div>
-            <div className="text-2xl font-bold text-foreground mb-2 font-display">{card.stat}</div>
-            <p className="text-sm text-muted-foreground leading-relaxed">{card.text}</p>
+            <p className="text-xs text-muted-foreground leading-relaxed">{card.text}</p>
           </div>
         ))}
       </div>

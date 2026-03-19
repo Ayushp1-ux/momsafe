@@ -1,108 +1,83 @@
 import { PageTransition } from "@/components/ui/page-transition";
 import { nutritionData } from "@/lib/mock-data";
-import { RadialBarChart, RadialBar, ResponsiveContainer, BarChart, Bar, XAxis, Tooltip } from "recharts";
-import { Apple, Droplets, Plus, Info } from "lucide-react";
-import { motion } from "framer-motion";
+import { BarChart, Bar, XAxis, ResponsiveContainer, CartesianGrid, Tooltip } from "recharts";
+import { Plus } from "lucide-react";
 
 export default function Nutrition() {
   const macros = [
-    { name: "Protein", val: nutritionData.protein.consumed, target: nutritionData.protein.target, fill: "hsl(var(--primary))" },
-    { name: "Carbs", val: nutritionData.carbs.consumed, target: nutritionData.carbs.target, fill: "hsl(var(--warning))" },
-    { name: "Fat", val: nutritionData.fat.consumed, target: nutritionData.fat.target, fill: "hsl(var(--accent))" },
+    { name: "Protein", val: nutritionData.protein.consumed, target: nutritionData.protein.target, fill: "#2563EB" },
+    { name: "Carbs", val: nutritionData.carbs.consumed, target: nutritionData.carbs.target, fill: "#D97706" },
+    { name: "Fat", val: nutritionData.fat.consumed, target: nutritionData.fat.target, fill: "#059669" },
   ];
-
-  const calData = [{ name: 'Calories', value: nutritionData.calories.consumed, fill: 'hsl(var(--primary))' }];
 
   return (
     <PageTransition>
-      <div className="flex justify-between items-center mb-8">
+      <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Nutrition Intelligence</h1>
-          <p className="text-muted-foreground mt-1">AI-optimized diet for maternal health.</p>
+          <h1 className="text-2xl font-bold text-foreground">Nutritional Intake</h1>
+          <p className="text-sm text-muted-foreground">Macronutrient tracking against clinical targets.</p>
         </div>
-        <button className="bg-primary text-white px-5 py-2.5 rounded-xl font-semibold shadow-md shadow-primary/20 hover:bg-primary/90 transition-all flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Log Meal
+        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white border border-primary rounded text-xs font-bold hover:bg-primary/90 transition-colors">
+          <Plus className="w-3.5 h-3.5" /> Log Entry
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calorie Ring */}
-        <div className="bg-white rounded-3xl p-8 border border-border/50 premium-shadow flex flex-col items-center justify-center relative">
-          <div className="absolute top-4 left-4 p-2 bg-blue-50 text-primary rounded-xl">
-            <Apple className="w-5 h-5" />
+        {/* Caloric Summary */}
+        <div className="card-clinical p-5 flex flex-col justify-center items-center text-center">
+          <div className="clinical-label mb-2">Energy Balance</div>
+          <div className="flex items-baseline gap-1 mb-2">
+            <span className="text-4xl font-bold tabular-nums tracking-tight text-foreground">{nutritionData.calories.consumed}</span>
+            <span className="text-sm text-muted-foreground font-medium">/ {nutritionData.calories.target} kcal</span>
           </div>
-          <div className="h-[220px] w-full relative">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart cx="50%" cy="50%" innerRadius="70%" outerRadius="100%" barSize={20} data={calData} startAngle={90} endAngle={-270}>
-                <RadialBar background={{ fill: '#F3F4F6' }} dataKey="value" cornerRadius={10} />
-              </RadialBarChart>
-            </ResponsiveContainer>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-4xl font-display font-bold text-foreground">{nutritionData.calories.consumed}</span>
-              <span className="text-sm font-medium text-muted-foreground">/ {nutritionData.calories.target} kcal</span>
-            </div>
+          <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden mt-4">
+            <div 
+              className="bg-primary h-full" 
+              style={{ width: `${(nutritionData.calories.consumed / nutritionData.calories.target) * 100}%` }}
+            />
           </div>
-          <h3 className="font-semibold text-lg mt-4">Daily Energy</h3>
         </div>
 
-        {/* Macros Bar Chart */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-8 border border-border/50 premium-shadow">
-          <h3 className="font-display font-bold text-lg mb-6">Macronutrient Breakdown</h3>
-          <div className="space-y-6">
+        {/* Macros Breakdown */}
+        <div className="lg:col-span-2 card-clinical p-5">
+          <h3 className="clinical-label mb-6">Macronutrient Distribution</h3>
+          <div className="space-y-5">
             {macros.map(m => (
               <div key={m.name}>
-                <div className="flex justify-between text-sm font-medium mb-2">
+                <div className="flex justify-between text-xs font-bold mb-1.5 uppercase tracking-wide">
                   <span className="text-foreground">{m.name}</span>
                   <span className="text-muted-foreground">{m.val}g / {m.target}g</span>
                 </div>
-                <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden">
-                  <motion.div 
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(m.val / m.target) * 100}%` }}
-                    transition={{ duration: 1, ease: "easeOut" }}
-                    className="h-full rounded-full"
-                    style={{ backgroundColor: m.fill }}
+                <div className="h-1.5 w-full bg-gray-100 overflow-hidden">
+                  <div 
+                    className="h-full"
+                    style={{ width: `${(m.val / m.target) * 100}%`, backgroundColor: m.fill }}
                   />
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-8 p-4 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3">
-            <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-amber-800 leading-relaxed">
-              <strong>AI Insight:</strong> You are consistently slightly low on protein. Consider adding a Greek yogurt snack in the afternoon to reach your target and support fetal growth.
-            </p>
-          </div>
         </div>
 
-        {/* Water Intake */}
-        <div className="lg:col-span-3 bg-white rounded-3xl p-6 border border-border/50 premium-shadow flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-blue-50 text-blue-500 rounded-2xl">
-              <Droplets className="w-8 h-8" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg">Hydration Tracker</h3>
-              <p className="text-muted-foreground text-sm">Goal: {nutritionData.water.target}L daily</p>
-            </div>
+        {/* Fluid Intake */}
+        <div className="lg:col-span-3 card-clinical p-5 flex items-center justify-between">
+          <div>
+            <h3 className="clinical-label mb-1">Hydration Volume</h3>
+            <p className="text-xs text-muted-foreground">Target: {nutritionData.water.target}L</p>
           </div>
-          <div className="flex-1 max-w-xl mx-8">
-            <div className="h-4 w-full bg-gray-100 rounded-full overflow-hidden border border-gray-200 shadow-inner">
-              <motion.div 
-                initial={{ width: 0 }}
-                animate={{ width: `${(nutritionData.water.consumed / nutritionData.water.target) * 100}%` }}
-                transition={{ duration: 1.5, ease: "easeOut" }}
-                className="h-full bg-gradient-to-r from-blue-400 to-blue-500 rounded-full"
+          <div className="flex-1 max-w-xl mx-8 relative">
+            <div className="h-2 w-full bg-gray-100 overflow-hidden">
+              <div 
+                className="h-full bg-blue-500"
+                style={{ width: `${(nutritionData.water.consumed / nutritionData.water.target) * 100}%` }}
               />
             </div>
-            <div className="flex justify-between mt-2 text-xs font-semibold text-muted-foreground">
-              <span>0L</span>
-              <span className="text-blue-600 font-bold">{nutritionData.water.consumed}L Logged</span>
-              <span>{nutritionData.water.target}L</span>
+            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-blue-600">
+              {nutritionData.water.consumed}L Logged
             </div>
           </div>
-          <button className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center hover:bg-blue-100 hover:scale-105 transition-all shadow-sm">
-            <Plus className="w-5 h-5" />
+          <button className="w-8 h-8 rounded bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center hover:bg-blue-100 transition-colors">
+            <Plus className="w-4 h-4" />
           </button>
         </div>
       </div>

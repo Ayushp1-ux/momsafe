@@ -1,182 +1,159 @@
 import { PageTransition } from "@/components/ui/page-transition";
-import { AnimatedNumber } from "@/components/ui/animated-number";
 import { vitalsData, alerts, aiRecommendations, generateTrendData } from "@/lib/mock-data";
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { Activity, ShieldAlert, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, CheckCircle, ChevronRight, BrainCircuit, BellRing } from "lucide-react";
+import { LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { AlertCircle, Clock, CheckCircle2, ChevronRight, Activity, Bell } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Dashboard() {
-  const areaData = generateTrendData(24, 72, 15); // Simulated overall risk/health score trend
+  const areaData = generateTrendData(24, 72, 15);
 
   return (
     <PageTransition>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
+      {/* Patient Header */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Command Center</h1>
-          <p className="text-muted-foreground mt-1">AI actively monitoring your vitals and health status.</p>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-3xl font-bold text-foreground">Sarah Kumar</h1>
+            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider rounded">PT-8924</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            32 years • Week 34 • G1P0 • Last active: Just now
+          </p>
         </div>
-        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-full shadow-sm border border-border/50 text-sm font-medium">
-          <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse" />
-          System Active • Last sync: Just now
+        <div className="text-right">
+          <div className="clinical-label mb-1">Current Risk</div>
+          <div className="flex items-baseline justify-end gap-2">
+            <span className="text-3xl font-bold tabular-nums text-green-600">18</span>
+            <span className="text-sm text-muted-foreground">/ 100</span>
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Risk MRI Card */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-8 premium-shadow border border-border/50 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-          
-          <div className="flex justify-between items-start mb-6 relative z-10">
-            <div>
-              <h2 className="text-lg font-semibold text-muted-foreground flex items-center gap-2">
-                <ShieldAlert className="w-5 h-5 text-primary" />
-                Current AI Risk Score
-              </h2>
-              <div className="flex items-baseline mt-4">
-                <AnimatedNumber 
-                  value={18} 
-                  className="text-7xl font-display font-extrabold text-foreground tracking-tighter"
-                />
-                <span className="text-2xl text-muted-foreground font-medium ml-2">/ 100</span>
+      {/* Vitals Row */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
+        {Object.entries(vitalsData).map(([key, data]) => {
+          const isWarning = data.status === 'warning';
+          return (
+            <div key={key} className="card-clinical p-4 flex flex-col justify-between">
+              <div className="flex items-start justify-between mb-2">
+                <span className="clinical-label">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
+                {isWarning ? (
+                  <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold uppercase tracking-wider rounded border border-amber-200">Warning</span>
+                ) : (
+                  <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-[9px] font-bold uppercase tracking-wider rounded border border-green-200">Normal</span>
+                )}
+              </div>
+              <div className="flex items-baseline gap-1 mt-1">
+                <span className={`data-value ${isWarning ? 'text-amber-600' : 'text-foreground'}`}>{data.current}</span>
+                <span className="text-xs text-muted-foreground font-medium">
+                  {key === 'bloodPressure' ? 'mmHg' : key === 'heartRate' ? 'bpm' : key === 'spo2' ? '%' : key === 'temperature' ? '°C' : 'kg'}
+                </span>
               </div>
             </div>
-            <div className="text-right">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-50 text-green-700 font-semibold text-sm border border-green-100">
-                <CheckCircle2 className="w-4 h-4" /> LOW RISK
-              </div>
-              <p className="text-sm text-muted-foreground mt-2 font-medium">
-                <ArrowDownRight className="inline w-4 h-4 text-green-500 mr-1" />
-                -2 from yesterday
-              </p>
-            </div>
-          </div>
+          );
+        })}
+      </div>
 
-          <div className="h-[180px] w-full mt-6 relative z-10">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={areaData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="date" hide />
-                <YAxis hide domain={['dataMin - 10', 'dataMax + 10']} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}
-                  labelStyle={{ fontWeight: 'bold', color: '#111827' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="hsl(var(--primary))" 
-                  strokeWidth={3}
-                  fillOpacity={1} 
-                  fill="url(#colorRisk)" 
-                  animationDuration={1500}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          
-          <div className="mt-6 pt-6 border-t border-border/50 flex items-center justify-between relative z-10">
-            <p className="text-sm text-muted-foreground font-medium">
-              AI Confidence: <span className="text-foreground font-bold">94%</span> based on 1.2M data points.
-            </p>
-            <Link href="/analytics" className="text-primary font-semibold text-sm flex items-center hover:underline">
-              Full Analysis <ChevronRight className="w-4 h-4 ml-1" />
-            </Link>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Main Charts */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          <div className="card-clinical p-5 flex-1">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="clinical-label text-sm">Vital Trends (24H)</h2>
+              <div className="flex gap-1">
+                {['6H', '12H', '24H'].map(t => (
+                  <button key={t} className={`px-2 py-1 text-xs font-medium rounded ${t === '24H' ? 'bg-gray-100 text-foreground' : 'text-muted-foreground hover:bg-gray-50'}`}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={areaData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 10}} dy={10} />
+                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 10}} />
+                  <RechartsTooltip 
+                    contentStyle={{ borderRadius: '4px', border: '1px solid #E2E6EA', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontSize: '12px' }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#2563EB" 
+                    strokeWidth={1.5}
+                    fillOpacity={0.05} 
+                    fill="#2563EB" 
+                    activeDot={{r: 4, strokeWidth: 0}}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
-        {/* Action Panel */}
+        {/* AI Engine & Alerts */}
         <div className="flex flex-col gap-6">
-          <div className="bg-white rounded-3xl p-6 premium-shadow border border-border/50 flex-1">
-            <h3 className="font-display font-semibold text-lg mb-4 flex items-center gap-2">
-              <BrainCircuit className="w-5 h-5 text-accent" />
-              Do This Now
-            </h3>
-            <div className="space-y-4">
-              {aiRecommendations.map(rec => (
-                <div key={rec.id} className="p-4 rounded-2xl bg-gray-50 border border-gray-100 hover:bg-blue-50/50 hover:border-blue-100 transition-colors group cursor-pointer">
+          {/* Risk Engine */}
+          <div className="card-clinical p-5">
+            <h2 className="clinical-label mb-4">AI Risk Assessment</h2>
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-16 h-16 rounded-full border-4 border-green-500 flex items-center justify-center shrink-0">
+                <span className="text-2xl font-bold">18</span>
+              </div>
+              <div>
+                <div className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold uppercase tracking-wider rounded border border-green-200 inline-block mb-1">
+                  Risk Level: Low
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Confidence: 94.2% based on latest vitals
+                </div>
+              </div>
+            </div>
+            <div className="p-3 bg-gray-50 border-l-2 border-primary rounded-r text-sm text-gray-700 leading-relaxed">
+              "Patient vitals stable. Mild elevation in weight trend, but within W34 expected parameters. Continue standard monitoring."
+            </div>
+          </div>
+
+          {/* Active Alerts */}
+          <div className="card-clinical flex-1 flex flex-col">
+            <div className="p-4 border-b border-border flex justify-between items-center">
+              <h2 className="clinical-label">Active Alerts ({alerts.length})</h2>
+              <Link href="/alerts" className="text-xs text-primary hover:underline">View All</Link>
+            </div>
+            <div className="p-0 flex-1 overflow-y-auto max-h-[300px]">
+              {alerts.map((alert, i) => (
+                <div key={alert.id} className={`p-4 border-l-2 hover:bg-gray-50 cursor-pointer ${i !== 0 ? 'border-t border-border/50' : ''} ${
+                  alert.severity === 'critical' ? 'border-l-red-500' : 
+                  alert.severity === 'warning' ? 'border-l-amber-500' : 'border-l-blue-500'
+                }`}>
                   <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-semibold text-sm text-foreground">{rec.title}</h4>
-                    {rec.priority === 'high' && <span className="w-2 h-2 rounded-full bg-red-500 mt-1" />}
+                    <span className="text-sm font-semibold">{alert.title}</span>
+                    <span className="text-[10px] text-muted-foreground flex items-center"><Clock className="w-3 h-3 mr-1" /> {alert.time}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed mb-3">{rec.description}</p>
-                  <button className="text-xs font-semibold text-primary bg-white px-3 py-1.5 rounded-lg shadow-sm border border-gray-200 group-hover:border-primary/30 transition-all w-full text-center">
-                    {rec.action}
-                  </button>
+                  <p className="text-xs text-muted-foreground line-clamp-2">{alert.description}</p>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </div>
-
-      {/* Vitals Grid */}
-      <div>
-        <div className="flex justify-between items-center mb-4 mt-8">
-          <h2 className="text-xl font-display font-bold text-foreground">Live Vitals</h2>
-          <Link href="/vitals" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">View All Details</Link>
+      
+      {/* W34 Protocol */}
+      <div className="card-clinical p-0">
+        <div className="p-4 border-b border-border">
+          <h2 className="clinical-label">W34 Clinical Protocol</h2>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-          {Object.entries(vitalsData).map(([key, data], i) => (
-            <div key={key} className="bg-white rounded-2xl p-5 premium-shadow border border-border/50 hover:-translate-y-1 transition-transform duration-300">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                {key.replace(/([A-Z])/g, ' $1').trim()}
-              </p>
-              <div className="flex items-end justify-between mb-4">
-                <span className="text-2xl font-display font-bold text-foreground">
-                  {data.current}
-                </span>
-                <span className={`text-xs font-bold flex items-center ${data.trend.startsWith('+') ? 'text-rose-500' : 'text-green-500'}`}>
-                  {data.trend.startsWith('+') ? <ArrowUpRight className="w-3 h-3 mr-0.5" /> : <ArrowDownRight className="w-3 h-3 mr-0.5" />}
-                  {data.trend}
-                </span>
+        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
+          {aiRecommendations.map(rec => (
+            <div key={rec.id} className="p-4">
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-sm font-bold">{rec.title}</span>
+                {rec.priority === 'high' && <span className="w-2 h-2 bg-red-500 rounded-full" />}
               </div>
-              <div className="h-12 w-full opacity-60">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={data.history}>
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke={data.status === 'warning' ? "hsl(var(--warning))" : "hsl(var(--primary))"} 
-                      strokeWidth={2} 
-                      dot={false}
-                      isAnimationActive={true}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Alerts Summary */}
-      <div className="mt-8">
-        <h2 className="text-xl font-display font-bold text-foreground mb-4">Recent Alerts</h2>
-        <div className="bg-white rounded-3xl border border-border/50 premium-shadow overflow-hidden">
-          {alerts.map((alert, i) => (
-            <div key={alert.id} className={`p-5 flex items-start gap-4 hover:bg-gray-50 transition-colors cursor-pointer ${i !== alerts.length - 1 ? 'border-b border-border/50' : ''}`}>
-              <div className={`p-2 rounded-xl mt-1 ${alert.severity === 'critical' ? 'bg-red-100 text-red-600' : alert.severity === 'warning' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600'}`}>
-                <BellRing className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-foreground text-sm">{alert.title}</h4>
-                <p className="text-sm text-muted-foreground mt-1">{alert.description}</p>
-                <div className="flex items-center gap-2 mt-3">
-                  <span className="text-xs text-gray-400 flex items-center font-medium">
-                    <Clock className="w-3 h-3 mr-1" /> {alert.time}
-                  </span>
-                  <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 capitalize">
-                    {alert.type}
-                  </span>
-                </div>
-              </div>
-              <button className="px-4 py-2 text-sm font-semibold rounded-xl bg-white border border-gray-200 hover:bg-gray-50 shadow-sm transition-all text-foreground shrink-0">
-                Review
+              <p className="text-xs text-muted-foreground mb-3">{rec.description}</p>
+              <button className="text-xs font-semibold px-3 py-1.5 bg-gray-50 border border-border rounded hover:bg-gray-100 transition-colors">
+                {rec.action}
               </button>
             </div>
           ))}

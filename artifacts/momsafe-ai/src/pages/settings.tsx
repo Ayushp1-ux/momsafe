@@ -1,6 +1,6 @@
 import { PageTransition } from "@/components/ui/page-transition";
 import { mockUser } from "@/lib/mock-data";
-import { User, Bell, Shield, Smartphone, ChevronRight, LogOut, CheckCircle } from "lucide-react";
+import { User, Bell, Shield, Smartphone, ChevronRight, LogOut, CheckCircle, Activity } from "lucide-react";
 import { useState } from "react";
 
 export default function Settings() {
