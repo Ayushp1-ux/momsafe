@@ -1,86 +1,171 @@
-import { PageTransition } from "@/components/ui/page-transition";
-import { nutritionData } from "@/lib/mock-data";
-import { BarChart, Bar, XAxis, ResponsiveContainer, CartesianGrid, Tooltip } from "recharts";
-import { Plus } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { Apple, Droplets, Plus, TrendingUp, ArrowRight } from "lucide-react";
+import { nutrition } from "@/lib/mock-data";
+
+function MacroBar({ label, consumed, goal, unit, color }: { label: string; consumed: number; goal: number; unit: string; color: string }) {
+  const pct = Math.round((consumed / goal) * 100);
+  return (
+    <div>
+      <div className="flex justify-between text-xs mb-1.5">
+        <span className="font-medium text-gray-700">{label}</span>
+        <span className="text-gray-500">{consumed}{unit} / {goal}{unit}</span>
+      </div>
+      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
+      </div>
+      <p className="text-[10px] text-gray-400 mt-1">{pct}% of daily goal</p>
+    </div>
+  );
+}
 
 export default function Nutrition() {
-  const macros = [
-    { name: "Protein", val: nutritionData.protein.consumed, target: nutritionData.protein.target, fill: "#2563EB" },
-    { name: "Carbs", val: nutritionData.carbs.consumed, target: nutritionData.carbs.target, fill: "#D97706" },
-    { name: "Fat", val: nutritionData.fat.consumed, target: nutritionData.fat.target, fill: "#059669" },
-  ];
+  const calPct = Math.round((nutrition.calories.consumed / nutrition.calories.goal) * 100);
 
   return (
-    <PageTransition>
-      <div className="mb-6 flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Nutritional Intake</h1>
-          <p className="text-sm text-muted-foreground">Macronutrient tracking against clinical targets.</p>
+          <h1 className="page-title">Nutrition Tracker</h1>
+          <p className="page-subtitle">Personalized nutrition monitoring for optimal fetal and maternal health.</p>
         </div>
-        <button className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white border border-primary rounded text-xs font-bold hover:bg-primary/90 transition-colors">
-          <Plus className="w-3.5 h-3.5" /> Log Entry
-        </button>
+        <button className="action-btn"><Plus className="w-4 h-4" /> Log Meal</button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Caloric Summary */}
-        <div className="card-clinical p-5 flex flex-col justify-center items-center text-center">
-          <div className="clinical-label mb-2">Energy Balance</div>
-          <div className="flex items-baseline gap-1 mb-2">
-            <span className="text-4xl font-bold tabular-nums tracking-tight text-foreground">{nutritionData.calories.consumed}</span>
-            <span className="text-sm text-muted-foreground font-medium">/ {nutritionData.calories.target} kcal</span>
+      {/* Calorie overview + macros */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* Calorie ring */}
+        <div className="card p-5 card-hover flex flex-col items-center justify-center">
+          <p className="text-xs text-gray-400 mb-3 font-medium">Today's Calories</p>
+          <div className="relative w-32 h-32 mb-3">
+            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#F3F4F6" strokeWidth="8" />
+              <circle cx="50" cy="50" r="40" fill="none" stroke="#3b82f6" strokeWidth="8" strokeLinecap="round"
+                strokeDasharray={`${calPct * 2.51} 251`} className="transition-all" />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-xl font-bold text-gray-900">{nutrition.calories.consumed}</span>
+              <span className="text-xs text-gray-400">of {nutrition.calories.goal}</span>
+            </div>
           </div>
-          <div className="w-full bg-gray-100 h-2 rounded-full overflow-hidden mt-4">
-            <div 
-              className="bg-primary h-full" 
-              style={{ width: `${(nutritionData.calories.consumed / nutritionData.calories.target) * 100}%` }}
-            />
+          <p className="text-xs text-gray-500">{nutrition.calories.goal - nutrition.calories.consumed} kcal remaining</p>
+          <div className="mt-2 badge-blue">{calPct}% of goal</div>
+        </div>
+
+        {/* Macronutrients */}
+        <div className="col-span-2 card p-5 card-hover">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Macronutrients</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-4">
+              <MacroBar label="Protein" consumed={nutrition.protein.consumed} goal={nutrition.protein.goal} unit="g" color="#3b82f6" />
+              <MacroBar label="Carbohydrates" consumed={nutrition.carbs.consumed} goal={nutrition.carbs.goal} unit="g" color="#8b5cf6" />
+            </div>
+            <div className="space-y-4">
+              <MacroBar label="Healthy Fat" consumed={nutrition.fat.consumed} goal={nutrition.fat.goal} unit="g" color="#f59e0b" />
+              <MacroBar label="Fiber" consumed={nutrition.fiber.consumed} goal={nutrition.fiber.goal} unit="g" color="#10b981" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Hydration + weekly chart */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* Hydration */}
+        <div className="card p-5 card-hover">
+          <div className="flex items-center gap-2 mb-4">
+            <Droplets className="w-4 h-4 text-blue-500" />
+            <h2 className="text-sm font-semibold text-gray-700">Hydration</h2>
+          </div>
+          <div className="flex items-end gap-1.5 mb-3" style={{ height: 80, alignItems: "flex-end" }}>
+            {Array.from({ length: 8 }).map((_, i) => {
+              const filled = i < Math.round((nutrition.water.consumed / nutrition.water.goal) * 8);
+              return (
+                <div key={i} className={`flex-1 rounded transition-colors ${filled ? "bg-blue-500" : "bg-gray-100"}`} style={{ height: `${20 + i * 9}px` }} />
+              );
+            })}
+          </div>
+          <div className="flex justify-between text-xs mb-2">
+            <span className="text-gray-500">Today</span>
+            <span className="font-bold text-gray-900">{nutrition.water.consumed}L / {nutrition.water.goal}L</span>
+          </div>
+          <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${(nutrition.water.consumed / nutrition.water.goal) * 100}%` }} />
+          </div>
+          <div className="grid grid-cols-4 gap-1.5 mt-4">
+            {[0.25, 0.25, 0.25, 0.25].map((v, i) => (
+              <button key={i} className="text-xs py-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-blue-50 hover:border-blue-200 hover:text-blue-600 transition-colors">+{v}L</button>
+            ))}
           </div>
         </div>
 
-        {/* Macros Breakdown */}
-        <div className="lg:col-span-2 card-clinical p-5">
-          <h3 className="clinical-label mb-6">Macronutrient Distribution</h3>
-          <div className="space-y-5">
-            {macros.map(m => (
-              <div key={m.name}>
-                <div className="flex justify-between text-xs font-bold mb-1.5 uppercase tracking-wide">
-                  <span className="text-foreground">{m.name}</span>
-                  <span className="text-muted-foreground">{m.val}g / {m.target}g</span>
+        {/* Weekly calorie chart */}
+        <div className="col-span-2 card p-5 card-hover">
+          <h2 className="text-sm font-semibold text-gray-700 mb-4">Weekly Calorie Intake</h2>
+          <ResponsiveContainer width="100%" height={140}>
+            <BarChart data={nutrition.weeklyData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} domain={[1500, 2400]} />
+              <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #E5E7EB" }} />
+              <Bar dataKey="calories" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Calories" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+      {/* Meals log + suggestions */}
+      <div className="grid grid-cols-2 gap-4">
+        <div className="card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Apple className="w-4 h-4 text-green-500" />
+              <h2 className="text-sm font-semibold text-gray-700">Today's Meals</h2>
+            </div>
+            <button className="ghost-btn text-xs"><Plus className="w-3 h-3" /> Add meal</button>
+          </div>
+          <div className="space-y-3">
+            {nutrition.meals.map(m => (
+              <div key={m.name} className={`p-3 rounded-xl border ${m.pending ? "border-dashed border-gray-200 bg-gray-50" : "border-gray-100 bg-white"}`}>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-sm font-semibold text-gray-800">{m.name}</span>
+                  <span className="text-xs text-gray-400">{m.time}</span>
                 </div>
-                <div className="h-1.5 w-full bg-gray-100 overflow-hidden">
-                  <div 
-                    className="h-full"
-                    style={{ width: `${(m.val / m.target) * 100}%`, backgroundColor: m.fill }}
-                  />
-                </div>
+                {m.pending ? (
+                  <p className="text-xs text-gray-400 italic">Not logged yet</p>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex flex-wrap gap-1">
+                        {m.items.map(item => <span key={item} className="text-xs text-gray-500">{item}</span>)}
+                      </div>
+                    </div>
+                    <span className="badge-blue">{m.calories} kcal</span>
+                  </>
+                )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Fluid Intake */}
-        <div className="lg:col-span-3 card-clinical p-5 flex items-center justify-between">
-          <div>
-            <h3 className="clinical-label mb-1">Hydration Volume</h3>
-            <p className="text-xs text-muted-foreground">Target: {nutritionData.water.target}L</p>
+        <div className="card p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="w-4 h-4 text-blue-500" />
+            <h2 className="text-sm font-semibold text-gray-700">AI Food Suggestions</h2>
           </div>
-          <div className="flex-1 max-w-xl mx-8 relative">
-            <div className="h-2 w-full bg-gray-100 overflow-hidden">
-              <div 
-                className="h-full bg-blue-500"
-                style={{ width: `${(nutritionData.water.consumed / nutritionData.water.target) * 100}%` }}
-              />
-            </div>
-            <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-blue-600">
-              {nutritionData.water.consumed}L Logged
-            </div>
+          <p className="text-xs text-gray-500 mb-4 leading-relaxed">Based on your current nutritional gaps and W32 pregnancy requirements.</p>
+          <div className="grid grid-cols-2 gap-2">
+            {nutrition.suggestions.map(s => (
+              <div key={s} className="flex items-center gap-2 p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+                <span className="text-lg">🥗</span>
+                <span className="text-xs font-medium text-emerald-800">{s}</span>
+              </div>
+            ))}
           </div>
-          <button className="w-8 h-8 rounded bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center hover:bg-blue-100 transition-colors">
-            <Plus className="w-4 h-4" />
-          </button>
+          <div className="mt-4 p-3 rounded-xl bg-blue-50 border border-blue-100">
+            <p className="text-xs text-blue-700 font-semibold mb-1">Nutritional Gaps Detected</p>
+            <p className="text-xs text-blue-600">Iron +15g, Fiber +7g, and Omega-3 intake below recommended W32 levels.</p>
+          </div>
         </div>
       </div>
-    </PageTransition>
+    </div>
   );
 }

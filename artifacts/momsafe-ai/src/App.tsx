@@ -1,12 +1,6 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-
-// Layout
-import { AppLayout } from "@/components/layout/AppLayout";
-
-// Pages
+import AppLayout from "@/components/layout/AppLayout";
 import Dashboard from "@/pages/dashboard";
 import Vitals from "@/pages/vitals";
 import Alerts from "@/pages/alerts";
@@ -17,16 +11,8 @@ import Medication from "@/pages/medication";
 import DailyLogs from "@/pages/daily-logs";
 import Predictions from "@/pages/predictions";
 import Settings from "@/pages/settings";
-import NotFound from "@/pages/not-found";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-    },
-  },
-});
+const queryClient = new QueryClient();
 
 function Router() {
   return (
@@ -42,23 +28,17 @@ function Router() {
         <Route path="/daily-logs" component={DailyLogs} />
         <Route path="/predictions" component={Predictions} />
         <Route path="/settings" component={Settings} />
-        <Route component={NotFound} />
       </Switch>
     </AppLayout>
   );
 }
 
-function App() {
+export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <Router />
+      </WouterRouter>
     </QueryClientProvider>
   );
 }
-
-export default App;

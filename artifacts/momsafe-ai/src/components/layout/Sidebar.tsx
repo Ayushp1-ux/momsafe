@@ -1,114 +1,90 @@
 import { Link, useLocation } from "wouter";
-import { 
-  HeartPulse, Activity, BellRing, BrainCircuit, 
-  Apple, Pill, BookHeart, LineChart, Settings, 
-  HelpCircle, Menu, X
+import { user } from "@/lib/mock-data";
+import {
+  LayoutDashboard, Activity, BellRing, LineChart,
+  Brain, Apple, Pill, BookHeart, TrendingUp, Settings,
+  HeartPulse, LogOut, HelpCircle
 } from "lucide-react";
-import { useState } from "react";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const NAV_ITEMS = [
-  { label: "Dashboard", href: "/", icon: HeartPulse },
+const NAV = [
+  { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Vitals", href: "/vitals", icon: Activity },
-  { label: "Alerts", href: "/alerts", icon: BellRing, badge: true },
+  { label: "Alerts", href: "/alerts", icon: BellRing, badge: 2 },
   { label: "Analytics", href: "/analytics", icon: LineChart },
-  { label: "AI Guidance", href: "/ai-guidance", icon: BrainCircuit },
+  { label: "AI Guidance", href: "/ai-guidance", icon: Brain },
   { label: "Nutrition", href: "/nutrition", icon: Apple },
   { label: "Medication", href: "/medication", icon: Pill },
   { label: "Daily Logs", href: "/daily-logs", icon: BookHeart },
-  { label: "Predictions", href: "/predictions", icon: LineChart },
+  { label: "Predictions", href: "/predictions", icon: TrendingUp },
 ];
 
-export function Sidebar() {
+export default function Sidebar() {
   const [location] = useLocation();
-  const [isOpen, setIsOpen] = useState(false);
-
-  const NavContent = () => (
-    <div className="flex flex-col h-full items-center py-4 bg-slate-900 text-slate-400">
-      <div className="w-10 h-10 mb-6 flex items-center justify-center text-white">
-        <HeartPulse className="w-6 h-6" />
-      </div>
-
-      <TooltipProvider delayDuration={0}>
-        <div className="flex-1 flex flex-col gap-2 w-full px-2">
-          {NAV_ITEMS.map((item) => {
-            const isActive = location === item.href;
-            return (
-              <Tooltip key={item.href}>
-                <TooltipTrigger asChild>
-                  <Link href={item.href} className={`
-                    w-10 h-10 flex items-center justify-center rounded-lg transition-colors relative mx-auto
-                    ${isActive 
-                      ? 'bg-white/10 text-white' 
-                      : 'hover:bg-white/5 hover:text-white'
-                    }
-                  `}>
-                    <item.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
-                    {item.badge && (
-                      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-900" />
-                    )}
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent side="right" className="border-slate-800 bg-slate-800 text-white text-xs ml-2">
-                  {item.label}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-col gap-2 w-full px-2 mt-auto">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button className="w-10 h-10 flex items-center justify-center rounded-lg transition-colors hover:bg-white/5 hover:text-white mx-auto">
-                <HelpCircle className="w-5 h-5" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="border-slate-800 bg-slate-800 text-white text-xs ml-2">
-              Support
-            </TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link href="/settings" className={`
-                w-10 h-10 flex items-center justify-center rounded-lg transition-colors mx-auto
-                ${location === '/settings' ? 'bg-white/10 text-white' : 'hover:bg-white/5 hover:text-white'}
-              `}>
-                <Settings className="w-5 h-5" />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="right" className="border-slate-800 bg-slate-800 text-white text-xs ml-2">
-              Settings
-            </TooltipContent>
-          </Tooltip>
-        </div>
-      </TooltipProvider>
-    </div>
-  );
 
   return (
-    <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="md:hidden fixed top-3 left-3 z-50 p-2 bg-white rounded border shadow-sm"
-      >
-        <Menu className="w-5 h-5 text-gray-700" />
-      </button>
+    <aside className="fixed left-0 top-0 h-full w-56 bg-white border-r border-[#E5E7EB] flex flex-col z-30">
+      {/* Logo */}
+      <div className="px-4 py-5 border-b border-[#E5E7EB]">
+        <Link href="/" className="flex items-center gap-2.5 no-underline">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <HeartPulse className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-gray-900 leading-none">MomSafe AI</p>
+            <p className="text-xs text-gray-400 mt-0.5">Maternal Health</p>
+          </div>
+        </Link>
+      </div>
 
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/40 z-40 md:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {/* User card */}
+      <div className="px-3 py-3 border-b border-[#E5E7EB]">
+        <div className="flex items-center gap-2.5 px-2 py-2 rounded-xl bg-gray-50">
+          <img src={user.avatar} alt="" className="w-8 h-8 rounded-full object-cover bg-gray-200 flex-shrink-0" onError={e => { (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%23ddd'/%3E%3C/svg%3E"; }} />
+          <div className="min-w-0">
+            <p className="text-xs font-semibold text-gray-800 truncate">{user.name}</p>
+            <span className="inline-block text-[10px] font-medium bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full leading-none mt-0.5">Week {user.week}</span>
+          </div>
+        </div>
+      </div>
 
-      <aside className={`
-        fixed top-0 left-0 h-full w-14 bg-slate-900 shadow-xl
-        flex flex-col z-50 transition-transform duration-300
-        ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
-      `}>
-        <NavContent />
-      </aside>
-    </>
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-3 overflow-y-auto space-y-0.5">
+        <p className="section-label px-2 mb-2">Navigation</p>
+        {NAV.map(({ label, href, icon: Icon, badge }) => {
+          const active = location === href;
+          return (
+            <Link key={href} href={href} className="block no-underline">
+              <div className={active ? "nav-item-active" : "nav-item"}>
+                <Icon className="w-4 h-4 flex-shrink-0" />
+                <span className="flex-1">{label}</span>
+                {badge && (
+                  <span className="ml-auto text-[10px] font-bold bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center">
+                    {badge}
+                  </span>
+                )}
+              </div>
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Bottom */}
+      <div className="px-3 py-3 border-t border-[#E5E7EB] space-y-0.5">
+        <Link href="/settings" className="block no-underline">
+          <div className={useLocation()[0] === "/settings" ? "nav-item-active" : "nav-item"}>
+            <Settings className="w-4 h-4" />
+            Settings
+          </div>
+        </Link>
+        <div className="nav-item text-gray-400">
+          <HelpCircle className="w-4 h-4" />
+          Help
+        </div>
+        <div className="nav-item text-red-500 hover:bg-red-50 hover:text-red-600">
+          <LogOut className="w-4 h-4" />
+          Sign out
+        </div>
+      </div>
+    </aside>
   );
 }

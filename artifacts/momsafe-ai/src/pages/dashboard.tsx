@@ -1,164 +1,297 @@
-import { PageTransition } from "@/components/ui/page-transition";
-import { vitalsData, alerts, aiRecommendations, generateTrendData } from "@/lib/mock-data";
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from "recharts";
-import { AlertCircle, Clock, CheckCircle2, ChevronRight, Activity, Bell } from "lucide-react";
+import { useState } from "react";
+import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { ArrowUpRight, ArrowDownRight, Minus, TrendingUp, TrendingDown, ShieldCheck, Brain, Activity, BellRing, Droplets, Moon, Pill, ChevronRight, Clock } from "lucide-react";
+import { riskScore, vitals, alerts, aiRecommendations, activityFeed, trendData, secondaryMetrics } from "@/lib/mock-data";
 import { Link } from "wouter";
 
+const statusColor: Record<string, string> = {
+  normal: "badge-green",
+  warning: "badge-yellow",
+  critical: "badge-red",
+};
+const alertColor: Record<string, string> = {
+  critical: "border-l-red-500 bg-red-50",
+  warning: "border-l-amber-400 bg-amber-50",
+  info: "border-l-blue-400 bg-blue-50",
+};
+const alertBadge: Record<string, string> = {
+  critical: "badge-red",
+  warning: "badge-yellow",
+  info: "badge-blue",
+};
+
+function Sparkline({ data }: { data: number[] }) {
+  const pts = data.map((v, i) => ({ v, i }));
+  return (
+    <ResponsiveContainer width="100%" height={28}>
+      <LineChart data={pts}>
+        <Line type="monotone" dataKey="v" stroke="#3b82f6" strokeWidth={1.5} dot={false} isAnimationActive />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+}
+
 export default function Dashboard() {
-  const areaData = generateTrendData(24, 72, 15);
+  const [period, setPeriod] = useState<"24h" | "7d">("24h");
+  const chartData = trendData[period];
 
   return (
-    <PageTransition>
-      {/* Patient Header */}
-      <div className="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-6">
+      {/* Page header */}
+      <div className="flex items-start justify-between">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-3xl font-bold text-foreground">Sarah Kumar</h1>
-            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider rounded">PT-8924</span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            32 years • Week 34 • G1P0 • Last active: Just now
-          </p>
+          <h1 className="page-title">Command Center</h1>
+          <p className="page-subtitle">AI actively monitoring your vitals and health status.</p>
         </div>
-        <div className="text-right">
-          <div className="clinical-label mb-1">Current Risk</div>
-          <div className="flex items-baseline justify-end gap-2">
-            <span className="text-3xl font-bold tabular-nums text-green-600">18</span>
-            <span className="text-sm text-muted-foreground">/ 100</span>
-          </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+            Monitoring Active
+          </span>
+          <span className="text-gray-300">·</span>
+          <span>Last sync: Just now</span>
         </div>
       </div>
 
-      {/* Vitals Row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 mb-6">
-        {Object.entries(vitalsData).map(([key, data]) => {
-          const isWarning = data.status === 'warning';
-          return (
-            <div key={key} className="card-clinical p-4 flex flex-col justify-between">
-              <div className="flex items-start justify-between mb-2">
-                <span className="clinical-label">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                {isWarning ? (
-                  <span className="px-1.5 py-0.5 bg-amber-50 text-amber-700 text-[9px] font-bold uppercase tracking-wider rounded border border-amber-200">Warning</span>
-                ) : (
-                  <span className="px-1.5 py-0.5 bg-green-50 text-green-700 text-[9px] font-bold uppercase tracking-wider rounded border border-green-200">Normal</span>
-                )}
+      {/* Hero + Do This Now */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* Risk MRI card */}
+        <div className="col-span-2 card p-6 card-hover">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-blue-600" />
+              <span className="text-sm font-semibold text-gray-700">AI Risk Score</span>
+            </div>
+            <div className={riskScore.level === "Low" ? "badge-green" : riskScore.level === "Moderate" ? "badge-yellow" : "badge-red"}>
+              {riskScore.level} Risk
+            </div>
+          </div>
+          <div className="flex items-end gap-4 mb-4">
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-6xl font-bold text-gray-900 tabular-nums">{riskScore.value}</span>
+                <span className="text-2xl text-gray-400 font-light">/ 100</span>
               </div>
-              <div className="flex items-baseline gap-1 mt-1">
-                <span className={`data-value ${isWarning ? 'text-amber-600' : 'text-foreground'}`}>{data.current}</span>
-                <span className="text-xs text-muted-foreground font-medium">
-                  {key === 'bloodPressure' ? 'mmHg' : key === 'heartRate' ? 'bpm' : key === 'spo2' ? '%' : key === 'temperature' ? '°C' : 'kg'}
+              <div className="flex items-center gap-3 mt-2">
+                <span className={`flex items-center gap-1 text-sm font-medium ${riskScore.change < 0 ? "text-emerald-600" : "text-red-500"}`}>
+                  {riskScore.change < 0 ? <TrendingDown className="w-4 h-4" /> : <TrendingUp className="w-4 h-4" />}
+                  {riskScore.change > 0 ? "+" : ""}{riskScore.change} from yesterday
                 </span>
+                <span className="text-xs text-gray-400">Confidence: {riskScore.confidence}%</span>
               </div>
             </div>
-          );
-        })}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Main Charts */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          <div className="card-clinical p-5 flex-1">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="clinical-label text-sm">Vital Trends (24H)</h2>
-              <div className="flex gap-1">
-                {['6H', '12H', '24H'].map(t => (
-                  <button key={t} className={`px-2 py-1 text-xs font-medium rounded ${t === '24H' ? 'bg-gray-100 text-foreground' : 'text-muted-foreground hover:bg-gray-50'}`}>
-                    {t}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={areaData} margin={{ top: 5, right: 0, left: -20, bottom: 0 }}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 10}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748B', fontSize: 10}} />
-                  <RechartsTooltip 
-                    contentStyle={{ borderRadius: '4px', border: '1px solid #E2E6EA', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', fontSize: '12px' }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="value" 
-                    stroke="#2563EB" 
-                    strokeWidth={1.5}
-                    fillOpacity={0.05} 
-                    fill="#2563EB" 
-                    activeDot={{r: 4, strokeWidth: 0}}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+          </div>
+          <p className="text-sm text-gray-500 leading-relaxed border-t border-gray-100 pt-4">{riskScore.explanation}</p>
+          <div className="flex items-center justify-between mt-3">
+            <span className="text-xs text-gray-400">Updated {riskScore.lastUpdated}</span>
+            <Link href="/analytics" className="ghost-btn text-xs">Full Analysis <ChevronRight className="w-3 h-3" /></Link>
           </div>
         </div>
 
-        {/* AI Engine & Alerts */}
-        <div className="flex flex-col gap-6">
-          {/* Risk Engine */}
-          <div className="card-clinical p-5">
-            <h2 className="clinical-label mb-4">AI Risk Assessment</h2>
-            <div className="flex items-center gap-4 mb-4">
-              <div className="w-16 h-16 rounded-full border-4 border-green-500 flex items-center justify-center shrink-0">
-                <span className="text-2xl font-bold">18</span>
-              </div>
-              <div>
-                <div className="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold uppercase tracking-wider rounded border border-green-200 inline-block mb-1">
-                  Risk Level: Low
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Confidence: 94.2% based on latest vitals
-                </div>
-              </div>
-            </div>
-            <div className="p-3 bg-gray-50 border-l-2 border-primary rounded-r text-sm text-gray-700 leading-relaxed">
-              "Patient vitals stable. Mild elevation in weight trend, but within W34 expected parameters. Continue standard monitoring."
-            </div>
+        {/* AI Insight — Do This Now */}
+        <div className="card p-5 card-hover flex flex-col">
+          <div className="flex items-center gap-2 mb-4">
+            <Brain className="w-4 h-4 text-blue-600" />
+            <span className="text-sm font-semibold text-gray-700">Do This Now</span>
           </div>
-
-          {/* Active Alerts */}
-          <div className="card-clinical flex-1 flex flex-col">
-            <div className="p-4 border-b border-border flex justify-between items-center">
-              <h2 className="clinical-label">Active Alerts ({alerts.length})</h2>
-              <Link href="/alerts" className="text-xs text-primary hover:underline">View All</Link>
-            </div>
-            <div className="p-0 flex-1 overflow-y-auto max-h-[300px]">
-              {alerts.map((alert, i) => (
-                <div key={alert.id} className={`p-4 border-l-2 hover:bg-gray-50 cursor-pointer ${i !== 0 ? 'border-t border-border/50' : ''} ${
-                  alert.severity === 'critical' ? 'border-l-red-500' : 
-                  alert.severity === 'warning' ? 'border-l-amber-500' : 'border-l-blue-500'
-                }`}>
-                  <div className="flex justify-between items-start mb-1">
-                    <span className="text-sm font-semibold">{alert.title}</span>
-                    <span className="text-[10px] text-muted-foreground flex items-center"><Clock className="w-3 h-3 mr-1" /> {alert.time}</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{alert.description}</p>
+          <div className="flex-1 space-y-3">
+            {aiRecommendations.map((r) => (
+              <div key={r.id} className="p-3 rounded-xl bg-gray-50 border border-gray-100">
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-xs font-semibold text-gray-800">{r.title}</p>
+                  <span className={r.priority === "high" ? "badge-red" : r.priority === "medium" ? "badge-yellow" : "badge-gray"} style={{ fontSize: 10 }}>
+                    {r.priority}
+                  </span>
                 </div>
-              ))}
-            </div>
+                <p className="text-xs text-gray-500 mt-1 leading-relaxed">{r.description}</p>
+                <button className="mt-2 text-xs font-medium text-blue-600 hover:text-blue-700">{r.action} →</button>
+              </div>
+            ))}
           </div>
         </div>
       </div>
-      
-      {/* W34 Protocol */}
-      <div className="card-clinical p-0">
-        <div className="p-4 border-b border-border">
-          <h2 className="clinical-label">W34 Clinical Protocol</h2>
+
+      {/* Vitals grid */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-gray-700">Vital Signs</h2>
+          <Link href="/vitals" className="text-xs text-blue-600 hover:text-blue-700 font-medium">View all →</Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-border">
-          {aiRecommendations.map(rec => (
-            <div key={rec.id} className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-sm font-bold">{rec.title}</span>
-                {rec.priority === 'high' && <span className="w-2 h-2 bg-red-500 rounded-full" />}
+        <div className="grid grid-cols-5 gap-3">
+          {vitals.map((v) => (
+            <div key={v.id} className="card p-4 card-hover">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-gray-400 font-medium">{v.label}</span>
+                <span className={statusColor[v.status] || "badge-gray"}>{v.status}</span>
               </div>
-              <p className="text-xs text-muted-foreground mb-3">{rec.description}</p>
-              <button className="text-xs font-semibold px-3 py-1.5 bg-gray-50 border border-border rounded hover:bg-gray-100 transition-colors">
-                {rec.action}
-              </button>
+              <div className="stat-value text-lg mb-1">{v.value}<span className="text-xs text-gray-400 font-normal ml-1">{v.unit}</span></div>
+              <div className="mb-2">
+                <Sparkline data={v.history} />
+              </div>
+              <div className={`text-xs font-medium flex items-center gap-1 ${v.trend === "up" ? "text-red-500" : v.trend === "down" ? "text-emerald-600" : "text-gray-400"}`}>
+                {v.trend === "up" ? <ArrowUpRight className="w-3 h-3" /> : v.trend === "down" ? <ArrowDownRight className="w-3 h-3" /> : <Minus className="w-3 h-3" />}
+                {v.change}
+              </div>
             </div>
           ))}
         </div>
       </div>
-    </PageTransition>
+
+      {/* Trend graph + Alert preview */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="col-span-2 card p-5 card-hover">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-700">Vital Trends</h2>
+            <div className="flex gap-1">
+              {(["24h", "7d"] as const).map((p) => (
+                <button key={p} onClick={() => setPeriod(p)} className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${period === p ? "bg-blue-600 text-white" : "text-gray-500 hover:text-gray-700 hover:bg-gray-100"}`}>{p}</button>
+              ))}
+            </div>
+          </div>
+          <ResponsiveContainer width="100%" height={180}>
+            <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="hrGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.12} />
+                  <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+              <XAxis dataKey="time" tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontSize: 10, fill: "#9CA3AF" }} axisLine={false} tickLine={false} />
+              <Tooltip contentStyle={{ borderRadius: 8, fontSize: 12, border: "1px solid #E5E7EB" }} />
+              <Area type="monotone" dataKey="hr" stroke="#3b82f6" fill="url(#hrGrad)" strokeWidth={2} dot={false} name="Heart Rate" />
+              <Area type="monotone" dataKey="bp" stroke="#8b5cf6" fill="none" strokeWidth={1.5} dot={false} strokeDasharray="4 2" name="Blood Pressure" />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Alert preview */}
+        <div className="card p-5 card-hover flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <BellRing className="w-4 h-4 text-red-500" />
+              <span className="text-sm font-semibold text-gray-700">Active Alerts</span>
+              <span className="badge-red ml-1">{alerts.filter(a => !a.acknowledged && !a.resolved).length}</span>
+            </div>
+            <Link href="/alerts" className="text-xs text-blue-600 font-medium">All →</Link>
+          </div>
+          <div className="flex-1 space-y-2">
+            {alerts.filter(a => !a.resolved).slice(0, 3).map(a => (
+              <div key={a.id} className={`flex gap-3 p-3 rounded-xl border-l-2 ${alertColor[a.severity]}`}>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className={alertBadge[a.severity]}>{a.severity}</span>
+                    <span className="text-[10px] text-gray-400">{a.time}</span>
+                  </div>
+                  <p className="text-xs font-semibold text-gray-800">{a.title}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 truncate">{a.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick summary + Activity feed + Secondary metrics */}
+      <div className="grid grid-cols-3 gap-4">
+        {/* Quick summary */}
+        <div className="card p-5">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Quick Summary</h2>
+          <div className="space-y-2.5">
+            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+              <span className="text-xs text-gray-500">Current Condition</span>
+              <span className="badge-green">Stable</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+              <span className="text-xs text-gray-500">Pregnancy Week</span>
+              <span className="text-xs font-semibold text-gray-800">Week 32 / 40</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+              <span className="text-xs text-gray-500">System Status</span>
+              <span className="badge-green flex items-center gap-1"><span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />Active</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-50">
+              <span className="text-xs text-gray-500">OB Provider</span>
+              <span className="text-xs font-semibold text-gray-800">Dr. Priya Sharma</span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-xs text-gray-500">Next Appointment</span>
+              <span className="text-xs font-semibold text-gray-800">Mar 26</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Activity feed */}
+        <div className="card p-5">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Activity Feed</h2>
+          <div className="space-y-3">
+            {activityFeed.map((item, i) => (
+              <div key={item.id} className="flex gap-3 items-start">
+                <div className="flex flex-col items-center">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full mt-1.5 flex-shrink-0" />
+                  {i < activityFeed.length - 1 && <div className="w-px h-6 bg-gray-100 mt-1" />}
+                </div>
+                <div className="flex-1 min-w-0 pb-1">
+                  <div className="flex items-baseline justify-between gap-2">
+                    <p className="text-xs font-semibold text-gray-800">{item.event}</p>
+                    <span className="text-[10px] text-gray-400 flex-shrink-0">{item.time}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-0.5">{item.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Secondary metrics */}
+        <div className="card p-5">
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Daily Metrics</h2>
+          <div className="space-y-3">
+            <div className="p-3 rounded-xl bg-blue-50 border border-blue-100">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Droplets className="w-3.5 h-3.5 text-blue-500" />
+                  <span className="text-xs font-medium text-gray-700">Hydration</span>
+                </div>
+                <span className="text-xs font-bold text-blue-600">{secondaryMetrics.hydration.value}L / {secondaryMetrics.hydration.goal}L</span>
+              </div>
+              <div className="h-1.5 bg-blue-100 rounded-full overflow-hidden">
+                <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${secondaryMetrics.hydration.pct}%` }} />
+              </div>
+              <p className="text-[10px] text-blue-500 mt-1">{secondaryMetrics.hydration.pct}% of daily goal</p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-purple-50 border border-purple-100">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Moon className="w-3.5 h-3.5 text-purple-500" />
+                  <span className="text-xs font-medium text-gray-700">Sleep</span>
+                </div>
+                <span className="text-xs font-bold text-purple-600">{secondaryMetrics.sleep.value} hrs</span>
+              </div>
+              <div className="h-1.5 bg-purple-100 rounded-full overflow-hidden">
+                <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${secondaryMetrics.sleep.pct}%` }} />
+              </div>
+              <p className="text-[10px] text-purple-500 mt-1">Quality: {secondaryMetrics.sleep.quality}</p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-100">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Pill className="w-3.5 h-3.5 text-emerald-500" />
+                  <span className="text-xs font-medium text-gray-700">Medication</span>
+                </div>
+                <span className="text-xs font-bold text-emerald-600">{secondaryMetrics.medication.taken}/{secondaryMetrics.medication.total}</span>
+              </div>
+              <div className="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${secondaryMetrics.medication.pct}%` }} />
+              </div>
+              <p className="text-[10px] text-emerald-500 mt-1">{secondaryMetrics.medication.pct}% adherence today</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

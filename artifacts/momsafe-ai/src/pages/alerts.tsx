@@ -1,145 +1,157 @@
-import { PageTransition } from "@/components/ui/page-transition";
-import { alerts } from "@/lib/mock-data";
-import { AlertTriangle, Clock, CheckCircle, Search, Filter } from "lucide-react";
 import { useState } from "react";
+import { AlertCircle, BellOff, CheckCircle2, Clock, ChevronDown, ChevronUp, X } from "lucide-react";
+import { alerts as allAlerts } from "@/lib/mock-data";
+
+const tabs = ["Active", "Acknowledged", "Resolved"] as const;
+const escalation = { critical: "L3 — Immediate response required", warning: "L2 — Warning — Monitor closely", info: "L1 — Informational" };
+const severityBorder: Record<string, string> = { critical: "border-l-red-500", warning: "border-l-amber-400", info: "border-l-blue-400" };
+const severityBg: Record<string, string> = { critical: "bg-red-50", warning: "bg-amber-50", info: "bg-blue-50" };
+const severityIcon: Record<string, string> = { critical: "text-red-500", warning: "text-amber-500", info: "text-blue-400" };
 
 export default function Alerts() {
-  const [activeTab, setActiveTab] = useState<'active' | 'resolved'>('active');
+  const [tab, setTab] = useState<"Active" | "Acknowledged" | "Resolved">("Active");
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const [dismissed, setDismissed] = useState<number[]>([]);
+
+  const active = allAlerts.filter(a => !a.acknowledged && !a.resolved && !dismissed.includes(a.id));
+  const acknowledged = allAlerts.filter(a => a.acknowledged);
+  const resolved = allAlerts.filter(a => a.resolved);
+  const shown = tab === "Active" ? active : tab === "Acknowledged" ? acknowledged : resolved;
 
   return (
-    <PageTransition>
-      <div className="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div className="space-y-6">
+      <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Alerts & Escalations</h1>
-          <p className="text-sm text-muted-foreground">Smart notifications ranked by clinical severity.</p>
+          <h1 className="page-title">Alerts & Escalation</h1>
+          <p className="page-subtitle">Smart notifications ranked by clinical severity.</p>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
-          <div className="flex bg-white rounded border border-border overflow-hidden w-full md:w-auto">
-            <button 
-              onClick={() => setActiveTab('active')}
-              className={`flex-1 md:flex-none px-4 py-1.5 text-xs font-medium transition-colors border-r border-border
-                ${activeTab === 'active' ? 'bg-gray-100 text-foreground' : 'text-muted-foreground hover:bg-gray-50'}`}
-            >
-              Active ({alerts.length})
-            </button>
-            <button 
-              onClick={() => setActiveTab('resolved')}
-              className={`flex-1 md:flex-none px-4 py-1.5 text-xs font-medium transition-colors
-                ${activeTab === 'resolved' ? 'bg-gray-100 text-foreground' : 'text-muted-foreground hover:bg-gray-50'}`}
-            >
-              Resolved
-            </button>
-          </div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          <span className="badge-red">{active.length} Active</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          <div className="card-clinical flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-border bg-gray-50 flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-                <input 
-                  type="text" 
-                  placeholder="Search alerts..." 
-                  className="w-full h-8 pl-8 pr-3 text-xs bg-white border border-border rounded focus:border-primary focus:outline-none"
-                />
-              </div>
-              <button className="px-3 h-8 bg-white border border-border rounded text-xs font-medium text-foreground hover:bg-gray-50 flex items-center gap-1.5">
-                <Filter className="w-3.5 h-3.5" /> Filter
-              </button>
+      {/* Critical banner */}
+      {active.some(a => a.severity === "critical") && (
+        <div className="card border border-red-200 bg-red-50 p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <AlertCircle className="w-4 h-4 text-red-600" />
             </div>
-            
-            <div className="flex-1">
-              {activeTab === 'active' && alerts.map((alert, index) => (
-                <div 
-                  key={alert.id}
-                  className={`p-4 border-b border-border last:border-b-0 hover:bg-gray-50/50 transition-colors flex gap-4 ${
-                    alert.severity === 'critical' ? 'border-l-2 border-l-red-500' : 
-                    alert.severity === 'warning' ? 'border-l-2 border-l-amber-500' : 
-                    'border-l-2 border-l-blue-500'
-                  }`}
-                >
-                  <div className="mt-0.5">
-                    {alert.severity === 'critical' && <AlertTriangle className="w-4 h-4 text-red-500" />}
-                    {alert.severity === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-500" />}
-                    {alert.severity === 'info' && <Clock className="w-4 h-4 text-blue-500" />}
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start mb-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-sm font-bold text-foreground">{alert.title}</h3>
-                        <span className={`px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded border ${
-                           alert.severity === 'critical' ? 'bg-red-50 text-red-700 border-red-200' : 
-                           alert.severity === 'warning' ? 'bg-amber-50 text-amber-700 border-amber-200' : 
-                           'bg-blue-50 text-blue-700 border-blue-200'
-                        }`}>
-                          {alert.severity}
-                        </span>
+            <div>
+              <p className="text-sm font-bold text-red-800">Critical Alert Requires Attention</p>
+              <p className="text-xs text-red-600 mt-0.5">Missed medication detected. Immediate action recommended.</p>
+            </div>
+            <button className="ml-auto action-btn bg-red-600 hover:bg-red-700">Respond Now</button>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-4 gap-4">
+        {/* Main alerts */}
+        <div className="col-span-3 space-y-4">
+          {/* Tabs */}
+          <div className="flex gap-1 card p-1 w-fit">
+            {tabs.map(t => (
+              <button key={t} onClick={() => setTab(t)} className={`text-xs px-4 py-1.5 rounded-lg font-medium transition-colors ${tab === t ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-100"}`}>
+                {t} {t === "Active" ? `(${active.length})` : t === "Acknowledged" ? `(${acknowledged.length})` : `(${resolved.length})`}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            {shown.length === 0 && (
+              <div className="card p-8 text-center">
+                <BellOff className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm text-gray-400">No {tab.toLowerCase()} alerts</p>
+              </div>
+            )}
+            {shown.map(a => (
+              <div key={a.id} className={`card border-l-4 ${severityBorder[a.severity]} ${severityBg[a.severity]} card-hover`}>
+                <div className="p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start gap-3 flex-1">
+                      <AlertCircle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${severityIcon[a.severity]}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap mb-1">
+                          <span className={a.severity === "critical" ? "badge-red" : a.severity === "warning" ? "badge-yellow" : "badge-blue"}>
+                            {a.severity === "critical" ? "L3 Critical" : a.severity === "warning" ? "L2 Warning" : "L1 Info"}
+                          </span>
+                          <span className="badge-gray">{a.category}</span>
+                          <span className="flex items-center gap-1 text-xs text-gray-400"><Clock className="w-3 h-3" />{a.time}</span>
+                        </div>
+                        <p className="text-sm font-semibold text-gray-800">{a.title}</p>
+                        <p className="text-xs text-gray-600 mt-0.5">{a.description}</p>
                       </div>
-                      <span className="text-[10px] text-muted-foreground flex items-center"><Clock className="w-3 h-3 mr-1" /> {alert.time}</span>
                     </div>
-                    
-                    <p className="text-xs text-muted-foreground mb-3 max-w-2xl">
-                      {alert.description}
-                    </p>
-                    
-                    <div className="flex items-center gap-2">
-                      <button className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors ${
-                         alert.severity === 'critical' ? 'bg-red-600 text-white hover:bg-red-700' : 
-                         'bg-primary text-white hover:bg-primary/90'
-                      }`}>
-                        Review Data
-                      </button>
-                      <button className="px-3 py-1.5 rounded text-xs font-medium text-foreground bg-white border border-border hover:bg-gray-50 transition-colors">
-                        Acknowledge
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button className="action-btn text-xs">Take Action</button>
+                      <button onClick={() => setDismissed(prev => [...prev, a.id])} className="ghost-btn text-xs">Dismiss</button>
+                      <button onClick={() => setExpanded(expanded === a.id ? null : a.id)} className="p-1 text-gray-400 hover:text-gray-600">
+                        {expanded === a.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </button>
                     </div>
+                  </div>
+
+                  {expanded === a.id && (
+                    <div className="mt-3 pt-3 border-t border-gray-200 space-y-2">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="p-3 rounded-xl bg-white border border-gray-200">
+                          <p className="text-xs text-gray-400 mb-1">Escalation Level</p>
+                          <p className="text-xs font-semibold text-gray-800">{escalation[a.severity]}</p>
+                        </div>
+                        <div className="p-3 rounded-xl bg-white border border-gray-200">
+                          <p className="text-xs text-gray-400 mb-1">Recommended Action</p>
+                          <p className="text-xs font-semibold text-gray-800">Review immediately and log response</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Escalation sidebar */}
+        <div className="space-y-4">
+          <div className="card p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Escalation Rules</h3>
+            <div className="space-y-3">
+              {[
+                { level: "L1", label: "Informational", desc: "App notification only. Logged for review.", color: "bg-blue-500" },
+                { level: "L2", label: "Warning", desc: "SMS alert sent. Requires acknowledgment within 2hrs.", color: "bg-amber-400" },
+                { level: "L3", label: "Critical", desc: "Immediate call to user & Emergency Contact if no response in 15m.", color: "bg-red-500" },
+              ].map(e => (
+                <div key={e.level} className="flex gap-2.5">
+                  <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${e.color}`} />
+                  <div>
+                    <p className="text-xs font-semibold text-gray-700">{e.level} — {e.label}</p>
+                    <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{e.desc}</p>
                   </div>
                 </div>
               ))}
-              
-              {activeTab === 'resolved' && (
-                <div className="text-center py-16">
-                  <CheckCircle className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-                  <h3 className="text-sm font-semibold text-foreground">No active alerts</h3>
-                  <p className="text-xs text-muted-foreground mt-1">All escalations have been resolved.</p>
-                </div>
-              )}
             </div>
           </div>
-        </div>
-        
-        <div className="lg:col-span-1">
-          <div className="card-clinical p-4 sticky top-20">
-            <h3 className="clinical-label mb-4">Escalation Protocol</h3>
-            <div className="space-y-4">
-              <div className="relative pl-4 border-l border-border">
-                <div className="absolute w-2 h-2 bg-blue-500 rounded-full -left-[4.5px] top-1" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">L1: Informational</h4>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Logged for review. No immediate action.</p>
-              </div>
-              <div className="relative pl-4 border-l border-border">
-                <div className="absolute w-2 h-2 bg-amber-500 rounded-full -left-[4.5px] top-1" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">L2: Warning</h4>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Requires acknowledgment within 2hrs.</p>
-              </div>
-              <div className="relative pl-4 border-l border-transparent">
-                <div className="absolute w-2 h-2 bg-red-500 rounded-full -left-[4.5px] top-1" />
-                <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">L3: Critical</h4>
-                <p className="text-[10px] text-muted-foreground mt-0.5">Immediate escalation to physician.</p>
-              </div>
-            </div>
-            
-            <div className="mt-6 pt-4 border-t border-border">
-              <button className="w-full py-2 bg-white border border-border rounded text-xs font-medium hover:bg-gray-50 transition-colors">
-                Configure Routing
-              </button>
+
+          <div className="card p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Alert Timeline</h3>
+            <div className="space-y-3">
+              {allAlerts.slice(0, 4).map((a, i) => (
+                <div key={a.id} className="flex gap-2.5">
+                  <div className="flex flex-col items-center">
+                    <div className={`w-2 h-2 rounded-full flex-shrink-0 mt-1 ${a.severity === "critical" ? "bg-red-500" : a.severity === "warning" ? "bg-amber-400" : "bg-blue-400"}`} />
+                    {i < 3 && <div className="w-px h-5 bg-gray-100 mt-1" />}
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-gray-700">{a.title}</p>
+                    <p className="text-[10px] text-gray-400">{a.time}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
       </div>
-    </PageTransition>
+    </div>
   );
 }
