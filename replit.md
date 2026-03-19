@@ -4,6 +4,22 @@
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
+## MomSafe AI
+
+A world-class premium AI-powered maternal health platform with 10 full pages:
+- Dashboard (command center with risk score, vitals, AI insights)
+- Vitals Intelligence (detailed vital monitoring with charts)
+- Alerts & Escalation (mission-control alert system)
+- Analytics & Intelligence (multi-layer charts and correlations)
+- AI Guidance (personalized daily plan)
+- Nutrition Intelligence (meal tracking + macros)
+- Medication Engine (visual schedule timeline)
+- Daily Logs (water, sleep, mood, symptoms)
+- Predictions Engine (future risk graph + scenario simulator)
+- Settings (profile, notifications, emergency contacts)
+
+Stack: React + Vite, Framer Motion, Recharts, Lucide, Wouter, date-fns
+
 ## Stack
 
 - **Monorepo tool**: pnpm workspaces
