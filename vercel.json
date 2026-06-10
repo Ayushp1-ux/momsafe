@@ -1,0 +1,5 @@
+{
+  "buildCommand": "pnpm build",
+  "outputDirectory": "artifacts/momsafe-ai/dist",
+  "framework": "vite"
+}
